@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      li {
+        list-style: none;
+      }
+      .container {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+      .title {
+        text-align: center;
+        width: 100%;
+        font-size: 20px;
+        font-weight: bold;
+        line-height: 40px;
+      }
+      .cart {
+        width: 600px;
+        border: 1px solid #ccc;
+      }
+      .goodsItem {
+        border-top: 1px dotted #ccc;
+        justify-content: space-between;
+        display: flex;
+        align-items: center;
+        padding: 10px;
+      }
+      .goodsImg {
+        width: 40px;
+        height: 30px;
+      }
+      .inputNum {
+        width: 20px;
+        padding: 4px 0;
+        text-align: center;
+      }
+      .sub {
+        background-color: #fff;
+        border: 1px solid #ccc;
+        padding: 4px 11px;
+      }
+      .add {
+        background-color: #fff;
+        border: 1px solid #ccc;
+        padding: 4px 10px;
+      }
+      .del {
+        color: red;
+        font-size: 20px;
+        cursor: pointer;
+        font-weight: bolder;
+      }
+      .totalWrap {
+        padding: 10px;
+        background-color: #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .orderBtn {
+        background-color: rgb(218, 64, 72);
+        color: #fff;
+        text-decoration: none;
+        padding: 6px 14px;
+        border-radius: 2px;
+      }
+      .goodsName {
+        width: 150px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="container">
+        <my-cart></my-cart>
+      </div>
+    </div>
+  </body>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script>
+    var CartTitle = {
+      props: ['uname'],
+      template: `
+      <div class="title">{{uname}}的商品</div>
+      `
+    }
+    var CartList = {
+      props: ['goodsData'],
+      template: `
+      <ul>
+          <li class="goodsItem" v-for='item in goodsData'>
+            <img
+              :src="item.thumb"
+              alt=""
+              class="goodsImg"
+            />
+            <span class='goodsName' >{{item.name}}</span>
+            <div class="numWrap">
+              <input type="button" value="-" class="sub" @click='sub(item.id)'  />
+              <input type="text" class="inputNum"  @blur='changeNum(item.id,$event)' :value='item.count' />
+              <input type="button" value="+" class="add" @click='add(item.id)' />
+            </div>
+            <a class="del" @click.prevent='delGoods(item.id)'>X</a>
+          </li>
+        </ul>
+      `,
+      methods: {
+        sub(id) {
+          this.$emit('cart-sub', id)
+        },
+        add(id) {
+          this.$emit('cart-add', id)
+        },
+        delGoods(id) {
+          this.$emit('cart-del', id)
+        },
+        changeNum(id, event) {
+          this.$emit('change-num', {
+            id: id,
+            num: event.target.value
+          })
+        }
+      }
+    }
+    var CartTotal = {
+      props: ['goodsData'],
+      template: `
+      <div class="totalWrap">
+          <span>总价： {{total}}</span>
+          <a href="" class='orderBtn'>结算</a>
+        </div>
+      `,
+      computed: {
+        total: function () {
+          let sum = 0
+          this.goodsData.forEach((item) => {
+            sum += item.count * item.price
+          })
+          return sum
+        }
+      }
+    }
+    Vue.component('my-cart', {
+      data: function () {
+        return {
+          uname: '张三',
+          goodsData: []
+        }
+      },
+      template: `
+      <div class="cart">
+        <cart-title :uname='uname' ></cart-title>
+        <cart-list 
+        :goodsData='goodsData'  
+          @cart-add='addCount($event)'
+          @cart-sub='subCount($event)'
+          @cart-del='delCart($event)'
+          @change-num='changeNumCount($event)' ></cart-list>
+        <cart-total  :goodsData='goodsData'></cart-total>
+      </div>
+      `,
+      components: {
+        'cart-title': CartTitle,
+        'cart-list': CartList,
+        'cart-total': CartTotal
+      },
+      mounted() {
+        let data = [
+          {
+            id: 1,
+            thumb: 'https://cn.vuejs.org/images/logo.png',
+            price: 20,
+            count: 4,
+            name: 'Vue学习视频'
+          },
+          {
+            id: 2,
+            thumb: 'https://31h.wang/img/avatar.jpg',
+            price: 100,
+            count: 1,
+            name: 'Node学习视频'
+          },
+          {
+            id: 3,
+            thumb:
+              'https://static.oschina.net/uploads/space/2016/1125/144806_W1dc_2720166.png',
+            price: 20,
+            count: 2,
+            name: 'Next.js学习视频'
+          },
+          {
+            id: 4,
+            thumb:
+              'https://cdn.docschina.org/static/media/docschina-logo.4c5554f1.svg',
+            price: 80,
+            count: 4,
+            name: 'React学习视频'
+          }
+        ]
+        this.goodsData = data
+      },
+      methods: {
+        delCart(id) {
+          this.goodsData = this.goodsData.filter((item) => {
+            return item.id != id
+          })
+        },
+        subCount(id) {
+          this.goodsData.findIndex((item) => {
+            if (item.id == id && item.count >= 1) {
+              --item.count
+            }
+            if (item.id == id && item.count == 0) {
+              this.goodsData = this.goodsData.filter((item) => {
+                return item.id != id
+              })
+            }
+          })
+        },
+        addCount(id) {
+          this.goodsData.findIndex((item) => {
+            if (item.id == id) {
+              ++item.count
+            }
+          })
+        },
+        changeNumCount(val){
+          this.goodsData.some(item=>{
+            if(item.id == val.id){
+              item.count = val. num
+            }
+            return true
+          })
+        }
+      }
+    })
+
+    var vm = new Vue({
+      el: '#app',
+      data: {},
+      computed: {}
+    })
+  </script>
+</html>
